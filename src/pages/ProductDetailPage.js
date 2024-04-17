@@ -1,5 +1,5 @@
 import React from 'react'
-import ProductDetail from '../features/product-list/Component/ProductDetail'
+import ProductDetail from '../features/product/Component/ProductDetail'
 import NavBar from '../features/navbar/NavBar'
 
 function ProductDetailPage() {
