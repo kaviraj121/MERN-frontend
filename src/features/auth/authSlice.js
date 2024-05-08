@@ -52,10 +52,7 @@ export const authSlice = createSlice({
   initialState,
   // The `reducers` field lets us define reducers and generate associated actions
   reducers: {
-    increment: (state) => {
-      
-      state.value += 1;
-    },
+    
     
   },
   // The `extraReducers` field lets the slice handle actions defined elsewhere,
@@ -98,9 +95,6 @@ export const authSlice = createSlice({
   },
 });
 
-export const selectLoggedInUser = (state)=>state.auth.loggedInUser;
-export const selectError = (state)=>state.auth.error;
-
-export const { increment } = authSlice.actions;
-
+export const selectLoggedInUser = (state) => state.auth.loggedInUser;
+export const selectError = (state) => state.auth.error;
 export default authSlice.reducer;

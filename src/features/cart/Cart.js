@@ -1,19 +1,16 @@
-import React, { useState, Fragment } from 'react';
+import React, { useState} from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import {
   deleteItemFromCartAsync,
   selectItems,
   updateCartAsync,
 } from './cartSlice';
-import { Dialog, Transition } from '@headlessui/react';
-import { XMarkIcon } from '@heroicons/react/24/outline';
 import { Link } from 'react-router-dom';
 import { Navigate } from 'react-router-dom';
 
 
 export default function Cart() {
   const dispatch = useDispatch();
-  const [open, setOpen] = useState(true)
 
   const items = useSelector(selectItems);
   const totalAmount = items.reduce(

@@ -2,10 +2,13 @@ import { useState, useEffect } from 'react';
 import { StarIcon } from '@heroicons/react/20/solid';
 import { RadioGroup } from '@headlessui/react';
 import { useDispatch, useSelector } from 'react-redux';
-import { fetchProductByIdAsync, selectProductById } from '../productSlice';
+import { fetchProductByIdAsync, selectProductById } from '../../product/productSlice';
 import { useParams } from 'react-router-dom';
 import { addToCartAsync } from '../../cart/cartSlice';
 import { selectLoggedInUser } from '../../auth/authSlice';
+
+// TODO: In server data we will add colors, sizes , highlights. to each product
+
 const colors = [
   { name: 'White', class: 'bg-white', selectedClass: 'ring-gray-400' },
   { name: 'Gray', class: 'bg-gray-200', selectedClass: 'ring-gray-400' },
@@ -27,26 +30,28 @@ const highlights = [
   'Dyed with our proprietary colors',
   'Pre-washed & pre-shrunk',
   'Ultra-soft 100% cotton',
-]
+];
 
 function classNames(...classes) {
-  return classes.filter(Boolean).join(' ')
+  return classes.filter(Boolean).join(' ');
 }
 
-export default function ProductDetail() {
+// TODO : Loading UI
+
+export default function AdminProductDetail() {
   const [selectedColor, setSelectedColor] = useState(colors[0]);
   const [selectedSize, setSelectedSize] = useState(sizes[2]);
-  const user = useSelector(selectLoggedInUser)
+  const user = useSelector(selectLoggedInUser);
   const product = useSelector(selectProductById);
   const dispatch = useDispatch();
   const params = useParams();
 
-  const handleCart = (e)=>{
+  const handleCart = (e) => {
     e.preventDefault();
-    const newItem  = {...product,quantity:1,user:user.id }
+    const newItem = { ...product, quantity: 1, user: user.id };
     delete newItem['id'];
-    dispatch(addToCartAsync(newItem))  
-  }
+    dispatch(addToCartAsync(newItem));
+  };
 
   useEffect(() => {
     dispatch(fetchProductByIdAsync(params.id));
@@ -54,11 +59,10 @@ export default function ProductDetail() {
 
   return (
     <div className="bg-white">
-     {product && (
+      {product && (
         <div className="pt-6">
           <nav aria-label="Breadcrumb">
             <ol
-              role="list"
               className="mx-auto flex max-w-2xl items-center space-x-2 px-4 sm:px-6 lg:max-w-7xl lg:px-8"
             >
               {product.breadcrumbs &&
@@ -93,20 +97,19 @@ export default function ProductDetail() {
                   {product.title}
                 </a>
               </li>
-              </ol>
+            </ol>
           </nav>
 
-        {/* Image gallery */}
-        {/* Image gallery */}
-        <div className="mx-auto mt-6 max-w-2xl sm:px-6 lg:grid lg:max-w-7xl lg:grid-cols-3 lg:gap-x-8 lg:px-8">
+          {/* Image gallery */}
+          <div className="mx-auto mt-6 max-w-2xl sm:px-6 lg:grid lg:max-w-7xl lg:grid-cols-3 lg:gap-x-8 lg:px-8">
             <div className="aspect-h-4 aspect-w-3 hidden overflow-hidden rounded-lg lg:block">
               <img
-              src={product.images[0]}
-              alt={product.title}
-              className="h-full w-full object-cover object-center"
-            />
-          </div>
-          <div className="hidden lg:grid lg:grid-cols-1 lg:gap-y-8">
+                src={product.images[0]}
+                alt={product.title}
+                className="h-full w-full object-cover object-center"
+              />
+            </div>
+            <div className="hidden lg:grid lg:grid-cols-1 lg:gap-y-8">
               <div className="aspect-h-2 aspect-w-3 overflow-hidden rounded-lg">
                 <img
                   src={product.images[1]}
@@ -124,23 +127,14 @@ export default function ProductDetail() {
             </div>
             <div className="aspect-h-5 aspect-w-4 lg:aspect-h-4 lg:aspect-w-3 sm:overflow-hidden sm:rounded-lg">
               <img
-              src={product.images[3]}
-              alt={product.title}
-              className="h-full w-full object-cover object-center"
-            />
-          </div>
-        </div>
-
-
-
-        {/* Product info */}
-        <div className="mx-auto max-w-2xl px-4 pb-16 pt-10 sm:px-6 lg:grid lg:max-w-7xl lg:grid-cols-3 lg:grid-rows-[auto,auto,1fr] lg:gap-x-8 lg:px-8 lg:pb-24 lg:pt-16">
-            <div className="lg:col-span-2 lg:border-r lg:border-gray-200 lg:pr-8">
-              <h1 className="text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl">
-                {product.title}
-              </h1>
+                src={product.images[3]}
+                alt={product.title}
+                className="h-full w-full object-cover object-center"
+              />
             </div>
-          {/* Options */}
+          </div>
+
+          {/* Product info */}
           <div className="mx-auto max-w-2xl px-4 pb-16 pt-10 sm:px-6 lg:grid lg:max-w-7xl lg:grid-cols-3 lg:grid-rows-[auto,auto,1fr] lg:gap-x-8 lg:px-8 lg:pb-24 lg:pt-16">
             <div className="lg:col-span-2 lg:border-r lg:border-gray-200 lg:pr-8">
               <h1 className="text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl">
@@ -148,8 +142,15 @@ export default function ProductDetail() {
               </h1>
             </div>
 
-            {/* Reviews */}
-            <div className="mt-6">
+            {/* Options */}
+            <div className="mt-4 lg:row-span-3 lg:mt-0">
+              <h2 className="sr-only">Product information</h2>
+              <p className="text-3xl tracking-tight text-gray-900">
+                ${product.price}
+              </p>
+
+              {/* Reviews */}
+              <div className="mt-6">
                 <h3 className="sr-only">Reviews</h3>
                 <div className="flex items-center">
                   <div className="flex items-center">
@@ -169,10 +170,12 @@ export default function ProductDetail() {
                   <p className="sr-only">{product.rating} out of 5 stars</p>
                 </div>
               </div>
+
               <form className="mt-10">
                 {/* Colors */}
                 <div>
                   <h3 className="text-sm font-medium text-gray-900">Color</h3>
+
                   <RadioGroup
                     value={selectedColor}
                     onChange={setSelectedColor}
@@ -204,25 +207,26 @@ export default function ProductDetail() {
                               color.class,
                               'h-8 w-8 rounded-full border border-black border-opacity-10'
                             )}
-                            />
-                            </RadioGroup.Option>
-                          ))}
-                        </div>
-                      </RadioGroup>
+                          />
+                        </RadioGroup.Option>
+                      ))}
                     </div>
-    
-                    {/* Sizes */}
-                    <div className="mt-10">
-                      <div className="flex items-center justify-between">
-                        <h3 className="text-sm font-medium text-gray-900">Size</h3>
-                        <a
-                          href="#"
-                          className="text-sm font-medium text-indigo-600 hover:text-indigo-500"
-                        >
-                          Size guide
-                        </a>
-                        </div>
-                        <RadioGroup
+                  </RadioGroup>
+                </div>
+
+                {/* Sizes */}
+                <div className="mt-10">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-sm font-medium text-gray-900">Size</h3>
+                    <a
+                      href="#"
+                      className="text-sm font-medium text-indigo-600 hover:text-indigo-500"
+                    >
+                      Size guide
+                    </a>
+                  </div>
+
+                  <RadioGroup
                     value={selectedSize}
                     onChange={setSelectedSize}
                     className="mt-4"
@@ -290,8 +294,9 @@ export default function ProductDetail() {
                     </div>
                   </RadioGroup>
                 </div>
+
                 <button
-                onClick={handleCart}
+                  onClick={handleCart}
                   type="submit"
                   className="mt-10 flex w-full items-center justify-center rounded-md border border-transparent bg-indigo-600 px-8 py-3 text-base font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
                 >
@@ -299,6 +304,7 @@ export default function ProductDetail() {
                 </button>
               </form>
             </div>
+
             <div className="py-10 lg:col-span-2 lg:col-start-1 lg:border-r lg:border-gray-200 lg:pb-16 lg:pr-8 lg:pt-6">
               {/* Description and details */}
               <div>
@@ -309,23 +315,27 @@ export default function ProductDetail() {
                     {product.description}
                   </p>
                 </div>
-                </div>
-                <div className="mt-10">
+              </div>
+
+              <div className="mt-10">
                 <h3 className="text-sm font-medium text-gray-900">
                   Highlights
                 </h3>
+
                 <div className="mt-4">
                   <ul role="list" className="list-disc space-y-2 pl-4 text-sm">
                     {highlights.map((highlight) => (
-                        <li key={highlight} className="text-gray-400">
-                          <span className="text-gray-600">{highlight}</span>
-                        </li>
-                      ))}
+                      <li key={highlight} className="text-gray-400">
+                        <span className="text-gray-600">{highlight}</span>
+                      </li>
+                    ))}
                   </ul>
                 </div>
               </div>
+
               <div className="mt-10">
                 <h2 className="text-sm font-medium text-gray-900">Details</h2>
+
                 <div className="mt-4 space-y-6">
                   <p className="text-sm text-gray-600">{product.description}</p>
                 </div>
@@ -333,9 +343,7 @@ export default function ProductDetail() {
             </div>
           </div>
         </div>
-         )}
-         </div>
-         );
-        }
-
-            
+      )}
+    </div>
+  );
+}
