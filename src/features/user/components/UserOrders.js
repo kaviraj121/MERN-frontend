@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { fetchLoggedInUserOrderAsync, selectUserInfo, selectUserOrders } from '../userSlice';
-import { discountedPrice } from '../../../app/constants';
+import { discountedPrice } from '../../../app/constant';
 
 export default function UserOrders() {
   const dispatch = useDispatch();

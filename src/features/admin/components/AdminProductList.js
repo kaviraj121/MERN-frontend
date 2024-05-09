@@ -24,8 +24,7 @@ import {
   PlusIcon,
   Squares2X2Icon,
 } from '@heroicons/react/20/solid';
-import { ITEMS_PER_PAGE } from '../../../app/constants';
-import { ITEMS_PER_PAGE, discountedPrice } from '../../../app/constants';
+import { ITEMS_PER_PAGE, discountedPrice } from '../../../app/constant';
 
 
 const sortOptions = [
@@ -525,6 +524,11 @@ function ProductGrid({ products }) {
                       <p className="text-sm text-red-400">product deleted</p>
                     </div>
                   )}
+                   {product.stock<=0 && (
+                  <div>
+                    <p className="text-sm text-red-400">out of stock</p>
+                  </div>
+                )}
                 </div>
               </Link>
               <div className="mt-5">

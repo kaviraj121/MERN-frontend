@@ -6,7 +6,7 @@ import { fetchProductByIdAsync, selectProductById } from '../../product/productS
 import { useParams } from 'react-router-dom';
 import { addToCartAsync } from '../../cart/cartSlice';
 import { selectLoggedInUser } from '../../auth/authSlice';
-import { discountedPrice } from '../../../app/constants';
+import { discountedPrice } from '../../../app/constant';
 
 // TODO: In server data we will add colors, sizes , highlights. to each product
 
