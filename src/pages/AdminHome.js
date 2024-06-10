@@ -1,5 +1,5 @@
 import AdminProductList from "../features/admin/components/AdminProductList";
-import NavBar from "../features/navbar/NavBar";
+import NavBar from "../features/navbar/Navbar";
 
 function AdminHome() {
     return ( 
@@ -7,7 +7,6 @@ function AdminHome() {
             <NavBar>
                 <AdminProductList></AdminProductList>
             </NavBar>
-            Foot
         </div>
      );
 }

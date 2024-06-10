@@ -7,123 +7,151 @@ import {
 } from '../features/cart/cartSlice';
 import { Navigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
-import {
-  updateUserAsync,
-} from '../features/auth/authSlice';
+import { updateUserAsync } from '../features/user/userSlice';
 import { useState } from 'react';
-import { createOrderAsync, selectCurrentOrder } from '../features/order/orderSlice';
+import {
+  createOrderAsync,
+  selectCurrentOrder,
+  selectStatus,
+} from '../features/order/orderSlice';
 import { selectUserInfo } from '../features/user/userSlice';
-import { discountedPrice } from '../app/constant';
+import  Grid  from 'react-loader-spinner';
 
+function Checkout() {
+  const dispatch = useDispatch();
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useForm();
 
-function CheckOut() {
-    const dispatch = useDispatch();
-    const {
-      register,
-      handleSubmit,
-      reset,
-      formState: { errors },
-    } = useForm();
-    const user = useSelector(selectUserInfo);
-    const items = useSelector(selectItems);
-    const currentOrder = useSelector(selectCurrentOrder);
-    const totalAmount = items.reduce(
-        (amount, item) => discountedPrice(item) * item.quantity + amount,
-      0
-    );
-    const totalItems = items.reduce((total, item) => item.quantity + total, 0);
-    const [selectedAddress, setSelectedAddress] = useState(null);
-    const [paymentMethod, setPaymentMethod] = useState(null);
-    const handleQuantity = (e, item) => {
-        dispatch(updateCartAsync({ ...item, quantity: +e.target.value }));
+  const user = useSelector(selectUserInfo);
+  const items = useSelector(selectItems);
+  const status = useSelector(selectStatus);
+  const currentOrder = useSelector(selectCurrentOrder);
+
+  const totalAmount = items.reduce(
+    (amount, item) => item.product.discountPrice * item.quantity + amount,
+    0
+  );
+  const totalItems = items.reduce((total, item) => item.quantity + total, 0);
+
+  const [selectedAddress, setSelectedAddress] = useState(null);
+  const [paymentMethod, setPaymentMethod] = useState(null);
+
+  const handleQuantity = (e, item) => {
+    dispatch(updateCartAsync({ id: item.id, quantity: +e.target.value }));
+  };
+
+  const handleRemove = (e, id) => {
+    dispatch(deleteItemFromCartAsync(id));
+  };
+
+  const handleAddress = (e) => {
+    console.log(e.target.value);
+    setSelectedAddress(user.addresses[e.target.value]);
+  };
+
+  const handlePayment = (e) => {
+    console.log(e.target.value);
+    setPaymentMethod(e.target.value);
+  };
+
+  const handleOrder = (e) => {
+    if (selectedAddress && paymentMethod) {
+      const order = {
+        items,
+        totalAmount,
+        totalItems,
+        user: user.id,
+        paymentMethod,
+        selectedAddress,
+        status: 'pending', // other status can be delivered, received.
       };
-      const handleRemove = (e, id) => {
-        dispatch(deleteItemFromCartAsync(id));
-      };
-      const handleAddress = (e) => {
-        console.log(e.target.value);
-        setSelectedAddress(user.addresses[e.target.value]);
-      };
-      const handlePayment = (e) => {
-        console.log(e.target.value);
-        setPaymentMethod(e.target.value);
-      };
-      const handleOrder = (e) => {
-        if (selectedAddress && paymentMethod) {
-            const order = {
-              items,
-              totalAmount,
-              totalItems,
-              user,
-              paymentMethod,
-              selectedAddress,
-              status: 'pending'
-            };
-            dispatch(createOrderAsync(order));
-            // need to redirect from here to a new page of order success.
-          } else {
-            // TODO : we can use proper messaging popup here
-            alert('Enter Address and Payment method')
-          }
-        //TODO : Redirect to order-success page
-        //TODO : clear cart after order
-        //TODO : on server change the stock number of items
-      };
-    
-    
-      return (
-        <>
-          {!items.length && <Navigate to="/" replace={true}></Navigate>}
-          {currentOrder && <Navigate to={`/order-success/${currentOrder.id}`} replace={true}></Navigate>}
-          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            <div className="grid grid-cols-1 gap-x-8 gap-y-10 lg:grid-cols-5">
-              <div className="lg:col-span-3">
-                <form
-                  className="bg-white px-5 py-12 mt-12"
-                  noValidate
-                  onSubmit={handleSubmit((data) => {
-                    console.log(data);
-                    dispatch(
-                      updateUserAsync({
-                        ...user,
-                        addresses: [...user.addresses, data],
-                      })
-                    );
-                    reset();
-                  })}
-                >
-                  <div className="space-y-12">
-                    <div className="border-b border-gray-900/10 pb-12">
-                      <h2 className="text-2xl font-semibold leading-7 text-gray-900">
-                        Personal Information
-                      </h2>
-                      <p className="mt-1 text-sm leading-6 text-gray-600">
-                        Use a permanent address where you can receive mail.
-                      </p>
-    
-                      <div className="mt-10 grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6">
-                        <div className="sm:col-span-4">
-                          <label
-                            htmlFor="name"
-                            className="block text-sm font-medium leading-6 text-gray-900"
-                          >
-                            Full name
-                          </label>
-                          <div className="mt-2">
-                            <input
-                              type="text"
-                              {...register('name', {
-                                required: 'name is required',
-                              })}
-                              id="name"
-                              className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-                            />
-                             {errors.name && (
+      dispatch(createOrderAsync(order));
+      // need to redirect from here to a new page of order success.
+    } else {
+      
+      alert('Enter Address and Payment method');
+    }
+  };
+
+  return (
+    <>
+      {!items.length && <Navigate to="/" replace={true}></Navigate>}
+      {currentOrder && currentOrder.paymentMethod === 'cash' && (
+        <Navigate
+          to={`/order-success/${currentOrder.id}`}
+          replace={true}
+        ></Navigate>
+      )}
+      {currentOrder && currentOrder.paymentMethod === 'card' && (
+        <Navigate to={`/stripe-checkout/`} replace={true}></Navigate>
+      )}
+
+      {status === 'loading' ? (
+        <Grid
+          height="80"
+          width="80"
+          color="rgb(79, 70, 229) "
+          ariaLabel="grid-loading"
+          radius="12.5"
+          wrapperStyle={{}}
+          wrapperClass=""
+          visible={true}
+        />
+      ) : <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="grid grid-cols-1 gap-x-8 gap-y-10 lg:grid-cols-5">
+          <div className="lg:col-span-3">
+            {/* This form is for address */}
+            <form
+              className="bg-white px-5 py-12 mt-12"
+              noValidate
+              onSubmit={handleSubmit((data) => {
+                console.log(data);
+                dispatch(
+                  updateUserAsync({
+                    ...user,
+                    addresses: [...user.addresses, data],
+                  })
+                );
+                reset();
+              })}
+            >
+              <div className="space-y-12">
+                <div className="border-b border-gray-900/10 pb-12">
+                  <h2 className="text-2xl font-semibold leading-7 text-gray-900">
+                    Personal Information
+                  </h2>
+                  <p className="mt-1 text-sm leading-6 text-gray-600">
+                    Use a permanent address where you can receive mail.
+                  </p>
+
+                  <div className="mt-10 grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6">
+                    <div className="sm:col-span-4">
+                      <label
+                        htmlFor="name"
+                        className="block text-sm font-medium leading-6 text-gray-900"
+                      >
+                        Full name
+                      </label>
+                      <div className="mt-2">
+                        <input
+                          type="text"
+                          {...register('name', {
+                            required: 'name is required',
+                          })}
+                          id="name"
+                          className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                        />
+                        {errors.name && (
                           <p className="text-red-500">{errors.name.message}</p>
                         )}
-                          </div>
-                        </div>
-                        <div className="sm:col-span-4">
+                      </div>
+                    </div>
+
+                    <div className="sm:col-span-4">
                       <label
                         htmlFor="email"
                         className="block text-sm font-medium leading-6 text-gray-900"
@@ -139,11 +167,12 @@ function CheckOut() {
                           type="email"
                           className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
                         />
-                         {errors.email && (
+                        {errors.email && (
                           <p className="text-red-500">{errors.email.message}</p>
                         )}
                       </div>
                     </div>
+
                     <div className="sm:col-span-3">
                       <label
                         htmlFor="phone"
@@ -153,43 +182,44 @@ function CheckOut() {
                       </label>
                       <div className="mt-2">
                         <input
-                         id="phone"
-                         {...register('phone', {
-                           required: 'phone is required',
-                         })}
-                         type="tel"
-                         className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-                       />
+                          id="phone"
+                          {...register('phone', {
+                            required: 'phone is required',
+                          })}
+                          type="tel"
+                          className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                        />
                         {errors.phone && (
                           <p className="text-red-500">{errors.phone.message}</p>
                         )}
-                       </div>
-                       </div>
+                      </div>
+                    </div>
 
-<div className="col-span-full">
-  <label
-    htmlFor="street-address"
-    className="block text-sm font-medium leading-6 text-gray-900"
-  >
-    Street address
-  </label>
-  <div className="mt-2">
-    <input
-      type="text"
-      {...register('street', {
-        required: 'street is required',
-      })}
-      id="street"
-      className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-    />
-    {errors.street && (
+                    <div className="col-span-full">
+                      <label
+                        htmlFor="street-address"
+                        className="block text-sm font-medium leading-6 text-gray-900"
+                      >
+                        Street address
+                      </label>
+                      <div className="mt-2">
+                        <input
+                          type="text"
+                          {...register('street', {
+                            required: 'street is required',
+                          })}
+                          id="street"
+                          className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                        />
+                        {errors.street && (
                           <p className="text-red-500">
                             {errors.street.message}
                           </p>
                         )}
-  </div>
-  </div>
-  <div className="sm:col-span-2 sm:col-start-1">
+                      </div>
+                    </div>
+
+                    <div className="sm:col-span-2 sm:col-start-1">
                       <label
                         htmlFor="city"
                         className="block text-sm font-medium leading-6 text-gray-900"
@@ -198,19 +228,19 @@ function CheckOut() {
                       </label>
                       <div className="mt-2">
                         <input
-                         type="text"
-                         {...register('city', {
-                           required: 'city is required',
-                         })}
-                         id="city"
-                         autoComplete="address-level2"
-                         className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-                       />
-                       {errors.city && (
+                          type="text"
+                          {...register('city', {
+                            required: 'city is required',
+                          })}
+                          id="city"
+                          autoComplete="address-level2"
+                          className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                        />
+                        {errors.city && (
                           <p className="text-red-500">{errors.city.message}</p>
                         )}
-                       </div>
-                       </div>
+                      </div>
+                    </div>
 
                     <div className="sm:col-span-2">
                       <label
@@ -221,19 +251,20 @@ function CheckOut() {
                       </label>
                       <div className="mt-2">
                         <input
-                         type="text"
-                         {...register('state', {
-                           required: 'state is required',
-                         })}
-                         id="state"
-                         autoComplete="address-level1"
-                         className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-                       />
+                          type="text"
+                          {...register('state', {
+                            required: 'state is required',
+                          })}
+                          id="state"
+                          autoComplete="address-level1"
+                          className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                        />
                         {errors.state && (
                           <p className="text-red-500">{errors.state.message}</p>
                         )}
-                       </div>
+                      </div>
                     </div>
+
                     <div className="sm:col-span-2">
                       <label
                         htmlFor="pinCode"
@@ -259,6 +290,7 @@ function CheckOut() {
                     </div>
                   </div>
                 </div>
+
                 <div className="mt-6 flex items-center justify-end gap-x-6">
                   <button
                     // onClick={e=>reset()}
@@ -274,7 +306,7 @@ function CheckOut() {
                     Add Address
                   </button>
                 </div>
-                </div>
+              </div>
             </form>
             <div className="border-b border-gray-900/10 pb-12">
               <h2 className="text-base font-semibold leading-7 text-gray-900">
@@ -283,7 +315,7 @@ function CheckOut() {
               <p className="mt-1 text-sm leading-6 text-gray-600">
                 Choose from Existing addresses
               </p>
-              <ul role="list">
+              <ul>
                 {user.addresses.map((address, index) => (
                   <li
                     key={index}
@@ -327,7 +359,7 @@ function CheckOut() {
                     Payment Methods
                   </legend>
                   <p className="mt-1 text-sm leading-6 text-gray-600">
-                  Choose One
+                    Choose One
                   </p>
                   <div className="mt-6 space-y-6">
                     <div className="flex items-center gap-x-3">
@@ -344,7 +376,7 @@ function CheckOut() {
                         htmlFor="cash"
                         className="block text-sm font-medium leading-6 text-gray-900"
                       >
-                         Cash
+                        Cash
                       </label>
                     </div>
                     <div className="flex items-center gap-x-3">
@@ -365,9 +397,9 @@ function CheckOut() {
                       </label>
                     </div>
                   </div>
-                  </fieldset>
+                </fieldset>
               </div>
-              </div>
+            </div>
           </div>
           <div className="lg:col-span-2">
             <div className="mx-auto mt-12 bg-white max-w-7xl px-2 sm:px-2 lg:px-4">
@@ -381,21 +413,26 @@ function CheckOut() {
                       <li key={item.id} className="flex py-6">
                         <div className="h-24 w-24 flex-shrink-0 overflow-hidden rounded-md border border-gray-200">
                           <img
-                            src={item.thumbnail}
-                            alt={item.title}
+                            src={item.product.thumbnail}
+                            alt={item.product.title}
                             className="h-full w-full object-cover object-center"
                           />
                         </div>
+
                         <div className="ml-4 flex flex-1 flex-col">
                           <div>
                             <div className="flex justify-between text-base font-medium text-gray-900">
                               <h3>
-                                <a href={item.href}>{item.title}</a>
+                                <a href={item.product.id}>
+                                  {item.product.title}
+                                </a>
                               </h3>
-                              <p className="ml-4">${discountedPrice(item)}</p>
+                              <p className="ml-4">
+                                ${item.product.discountPrice}
+                              </p>
                             </div>
                             <p className="mt-1 text-sm text-gray-500">
-                              {item.brand}
+                              {item.product.brand}
                             </p>
                           </div>
                           <div className="flex flex-1 items-end justify-between text-sm">
@@ -434,6 +471,7 @@ function CheckOut() {
                   </ul>
                 </div>
               </div>
+
               <div className="border-t border-gray-200 px-2 py-6 sm:px-2">
                 <div className="flex justify-between my-2 text-base font-medium text-gray-900">
                   <p>Subtotal</p>
@@ -447,7 +485,7 @@ function CheckOut() {
                   Shipping and taxes calculated at checkout.
                 </p>
                 <div className="mt-6">
-                  <div 
+                  <div
                     onClick={handleOrder}
                     className="flex cursor-pointer items-center justify-center rounded-md border border-transparent bg-indigo-600 px-6 py-3 text-base font-medium text-white shadow-sm hover:bg-indigo-700"
                   >
@@ -472,9 +510,9 @@ function CheckOut() {
             </div>
           </div>
         </div>
-      </div>
-      </>
+      </div>}
+    </>
   );
 }
 
-export default CheckOut;
+export default Checkout;

@@ -126,7 +126,6 @@ export const productSlice = createSlice({
         );
         state.products[index] = action.payload;
         state.selectedProduct = action.payload;
-        
 
       });
   },
